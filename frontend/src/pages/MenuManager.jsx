@@ -129,6 +129,7 @@ function MenuManager() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 5000);
   };
+  
   useEffect(() => {
     fetchMenu();
     fetchAllCategories();
@@ -144,7 +145,7 @@ function MenuManager() {
     if (activeTab === 'categories' && searchTerm === '') {
       setFilteredCategories(allCategories);
     }
-  }, [activeTab, allCategories]);
+  }, [activeTab, allCategories, searchTerm]);
 
   const fetchMenu = async () => {
     if (!token) {
@@ -154,7 +155,7 @@ function MenuManager() {
     }
     try {
       setLoading(true);
-      const res = await axios.get('${import.meta.env.VITE_BASE_URL}/api/menu', {
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/menu`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMenuItems(res.data);
@@ -169,7 +170,7 @@ function MenuManager() {
 
   const fetchAllCategories = async () => {
     try {
-      const res = await axios.get('${import.meta.env.VITE_BASE_URL}/api/categories', {
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAllCategories(res.data);
@@ -222,7 +223,7 @@ function MenuManager() {
       }
 
       const res = await axios.post(
-        '${import.meta.env.VITE_BASE_URL}/api/menu',
+        `${import.meta.env.VITE_BASE_URL}/api/menu`,
         formData,
         {
           headers: {
@@ -283,6 +284,7 @@ function MenuManager() {
     }
     fetchMenu();
   };
+  
   function arrayBufferToBase64(buffer) {
     // If buffer is already a Uint8Array
     if (buffer instanceof Uint8Array) {
@@ -317,6 +319,7 @@ function MenuManager() {
     }
     return window.btoa(binary);
   }
+  
   const getImageSource = (item) => {
     if (!item.image) return null;
   
@@ -345,6 +348,7 @@ function MenuManager() {
   
     return null;
   };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 py-8 md:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -573,11 +577,11 @@ function MenuManager() {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
+
                           </button>
                         </div>
                         
                         <div className="mb-4 bg-gray-100 rounded-lg h-40 flex items-center justify-center overflow-hidden">
-                          
                           {item.image ? (
                             <img 
                               src={getImageSource(item)} 
