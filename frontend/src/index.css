@@ -1,0 +1,130 @@
+@import "tailwindcss";
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body.dark {
+  background: #333;
+  color: #fff;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+/* (Previous styles remain unchanged) */
+
+input[type="text"] {
+  padding: 5px;
+  margin: 5px;
+}
+
+/* Rest of the CSS as before */
+.sidebar-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.sidebar {
+  width: 200px;
+  background: #f4f4f4;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.visible {
+  transform: translateX(0);
+}
+
+.sidebar.hidden {
+  transform: translateX(-200px);
+}
+
+.sidebar h3 {
+  margin-top: 0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin: 10px 0;
+}
+
+.sidebar ul li a {
+  text-decoration: none;
+  color: #333;
+}
+
+.sidebar ul li a:hover {
+  color: #007bff;
+}
+
+.dashboard {
+  margin-left: 220px;
+  padding: 60px 20px 20px;
+  flex-grow: 1;
+  width: calc(100% - 220px); /* Ensure it takes remaining space */
+}
+
+.dashboard.sidebar-hidden {
+  margin-left: 0;
+  width: 100%;
+}
+
+button {
+  padding: 10px;
+  margin: 5px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f4f4f4;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    transform: none; /* Disable slide on small screens */
+  }
+  .sidebar.hidden {
+    display: none; /* Simply hide instead of sliding */
+  }
+  .dashboard {
+    margin-left: 0;
+    width: 100%;
+    padding-top: 50px;
+  }
+  .sidebar-toggle {
+    top: 5px;
+    left: 5px;
+  }
+}
