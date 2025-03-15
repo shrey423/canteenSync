@@ -575,7 +575,7 @@ function LandingPage() {
             <ul className="space-y-2 text-white/60">
               <li><a href="#" className="hover:text-white transition-colors duration-200">Privacy</a></li>
               <li><a href="#" className="hover:text-white transition-colors duration-200">Terms</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-200">Cookie Policy</a></li>
+              <li><a href="#" className="hover:text-white transition-colors duration-200">Cookie Policy  i am sorry</a></li>
             </ul>
           </div>
         </div>
