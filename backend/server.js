@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://your-frontend-domain.com"],
+    origin: ["http://localhost:5173", "https://canteen-management-final-backend.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }
@@ -18,7 +18,7 @@ const io = socketIo(server, {
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "https://your-frontend-domain.com"],
+  origin: ["http://localhost:5173", "https://canteen-management-final-backend.onrender.com"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
