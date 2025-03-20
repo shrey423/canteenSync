@@ -15,7 +15,7 @@ function OrderQueue({ userId }) {
   const [notification, setNotification] = useState(null);
 
   // Audio for new order notifications
-  const newOrderSound = new Audio('/sounds/new-order.mp3');
+  const newOrderSound = new Audio('/sounds/new_order.mp3');
 
   useEffect(() => {
     if (!userId) return;
