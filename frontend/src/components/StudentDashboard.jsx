@@ -349,7 +349,7 @@ const navigate = useNavigate();
                       }}
                     >
                       <div className="relative p-6">
-                        <div className="absolute top-0 right-0 h-full w-1/4 bg-gradient-to-l from-gray-50 to-transparent opacity-70"></div>
+                        
                         
                         <div className="flex justify-between items-center mb-6">
                           <div className="flex items-center space-x-4">
