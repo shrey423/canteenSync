@@ -345,35 +345,6 @@ function StudentDashboard({ userId, managerId, content = 'orders' }) {
             ) : (
               <AnimatePresence>
                 <div className="grid gap-6">
-<<<<<<< HEAD
-                  {orders.map((order, index) => (
-                    <motion.div 
-                      key={order._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border border-gray-100 rounded-3xl bg-white hover:shadow-xl transition-all duration-300 overflow-hidden"
-                      style={{
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
-                        transform: 'translateZ(0)'
-                      }}
-                    >
-                      <div className="relative p-6">
-                        
-                        
-                        <div className="flex justify-between items-center mb-6">
-                          <div className="flex items-center space-x-4">
-                            <span className="font-bold text-2xl text-gray-900">#{order._id.slice(-6)}</span>
-                            <motion.span 
-                              variants={order.status === 'Ready' ? statusVariants.ready : (order.status === 'Pending' ? statusVariants.pending : {})}
-                              animate={order.status === 'Ready' ? "ready" : (order.status === 'Pending' ? "pending" : "initial")}
-                              className={`text-sm font-medium px-4 py-2 rounded-full flex items-center space-x-2 ${getStatusStyles(order.status)}`}
-                            >
-                              {getStatusIcon(order.status)}
-                              <span>{order.status}</span>
-                            </motion.span>
-=======
                   {orders.filter(order => order.status.toLowerCase() !== 'cancelled').map((order, index) => {
                     console.log(`Order ${order._id}: status=${order.status}, canCancel=${order.canCancel}`);
                     return (
@@ -419,7 +390,6 @@ function StudentDashboard({ userId, managerId, content = 'orders' }) {
                                 </motion.span>
                               </motion.div>
                             )}
->>>>>>> 38ecb02 (improved cancel function in student ,navigation link checkout)
                           </div>
                           
                           <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
