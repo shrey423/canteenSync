@@ -51,30 +51,33 @@ module.exports = (io) => {
     try {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).send('Order not found');
-      if (order.studentId.toString() !== req.user.id) return res.status(403).send('Forbidden');
-      if (order.paymentStatus === 'Paid') return res.status(400).send('Cannot cancel paid order');
-      
-      const elapsedTime = (Date.now() - order.createdAt) / 60000;
-      if (!order.canCancel || elapsedTime > 5) {
-        return res.status(400).send('Cancellation time expired');
-      }
-      
+  
+      if (order.studentId.toString() !== req.user.id)
+        return res.status(403).send('Forbidden');
+  
+      if (order.paymentStatus === 'Paid')
+        return res.status(400).send('Cannot cancel paid order');
+  
+      if (!order.canCancel)
+        return res.status(400).send('Order cannot be canceled');
+  
       order.status = 'Cancelled';
       order.canCancel = false;
       await order.save();
-
-      const populatedOrder = await Order.populate(order, { path: 'items.menuItemId' });
+  
+      const populatedOrder = await order.populate('items.menuItemId');
       const orderData = toPlainObject(populatedOrder);
-
+  
       io.to(order.managerId.toString()).emit('orderUpdate', orderData);
       io.to(order.studentId.toString()).emit('orderUpdate', orderData);
-
+  
       res.json(orderData);
     } catch (err) {
-      res.status(400).send('Error canceling order: ' + err.message);
+      console.error('Error cancelling order:', err);
+      res.status(500).send('Server error');
     }
   });
-
+  
   // Cancel order by manager
   router.put('/cancel/:id', auth, async (req, res) => {
     if (req.user.role !== 'manager') return res.status(403).send('Forbidden');

@@ -3,8 +3,9 @@ import { useCheckout } from '../context/CheckoutContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 function CheckoutLink({ role }) {
-  const { isCheckoutActive, items, menuItems, managerUpiId } = useCheckout();
+  const { isCheckoutActive, items, menuItems, managerUpiId, orderId } = useCheckout();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   
   // Add comprehensive validation
@@ -36,6 +37,17 @@ function CheckoutLink({ role }) {
   const totalItems = useMemo(() => {
     return items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   }, [items]);
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    // If we're on the payment step (orderId exists), navigate to payment page
+    if (orderId) {
+      navigate('/checkout', { state: { step: 2 } });
+    } else {
+      // Otherwise navigate to checkout
+      navigate('/checkout');
+    }
+  };
   
   if (!shouldShow) {
     return null;
@@ -49,7 +61,8 @@ function CheckoutLink({ role }) {
     >
       <div className="max-w-6xl mx-auto">
         <Link 
-          to="/checkout" 
+          to={orderId ? '#' : '/checkout'} 
+          onClick={handleClick}
           className="flex items-center justify-between mx-4 my-4 px-8 py-4 bg-black text-white rounded-2xl shadow-2xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99]"
         >
           <div className="flex items-center space-x-3">
@@ -61,11 +74,15 @@ function CheckoutLink({ role }) {
                 {totalItems}
               </span>
             </div>
-            <span className="font-medium">Continue to Checkout</span>
+            <span className="font-medium">
+              {orderId ? 'Complete Payment' : 'Continue to Checkout'}
+            </span>
           </div>
           
           <div className="flex items-center">
-            <span className="mr-2">Complete Your Order</span>
+            <span className="mr-2">
+              {orderId ? 'Finish Your Order' : 'Complete Your Order'}
+            </span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>

@@ -11,7 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import socket from '../socket';
 import { useNavigate } from 'react-router-dom';
 import nightImage from '../assets/night.jpg';
-// Food category background images (placeholder URLs)
+
+// Food category background images
 const foodBackgrounds = {
   default: "/api/placeholder/1200/600",
   breakfast: "/api/placeholder/1200/600",
@@ -42,14 +43,14 @@ function StudentDashboard({ userId, managerId, content = 'orders' }) {
   const [activeTime, setActiveTime] = useState('');
   const { clearCheckout } = useCheckout();
   const headerRef = useRef(null);
-const navigate = useNavigate();
+  const navigate = useNavigate();
+  const isCancellingRef = useRef(false);
+
   // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
       setTime(now);
-      
-      // Set active time period for theming
       const hour = now.getHours();
       if (hour >= 6 && hour < 11) setActiveTime('breakfast');
       else if (hour >= 11 && hour < 16) setActiveTime('lunch');
@@ -57,7 +58,6 @@ const navigate = useNavigate();
       else setActiveTime('snacks');
     }, 60000);
     
-    // Set initial time period
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 11) setActiveTime('breakfast');
     else if (hour >= 11 && hour < 16) setActiveTime('lunch');
@@ -67,14 +67,18 @@ const navigate = useNavigate();
     return () => clearInterval(timer);
   }, []);
 
-  // Parallax effect for header
+  // Throttled parallax effect
   useEffect(() => {
+    let timeout;
     const handleScroll = () => {
-      if (headerRef.current) {
-        const offset = window.scrollY;
-        headerRef.current.style.transform = `translateY(${offset * 0.4}px)`;
-        headerRef.current.style.opacity = 1 - (offset * 0.003);
-      }
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        if (headerRef.current) {
+          const offset = window.scrollY;
+          headerRef.current.style.transform = `translateY(${offset * 0.4}px)`;
+          headerRef.current.style.opacity = 1 - (offset * 0.003);
+        }
+      }, 16);
     };
     
     window.addEventListener('scroll', handleScroll);
@@ -95,7 +99,7 @@ const navigate = useNavigate();
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           })
         ]);
-        setOrders(ordersRes.data);
+        setOrders(ordersRes.data.filter(order => order.status.toLowerCase() !== 'cancelled'));
         setName(userRes.data.name);
         setError(null);
       } catch (err) {
@@ -109,6 +113,8 @@ const navigate = useNavigate();
     fetchData();
 
     const handleOrderUpdate = (updatedOrder) => {
+      if (isCancellingRef.current) return;
+      console.log('Received orderUpdate:', updatedOrder);
       setOrders(prev => {
         if (['Cancelled', 'Completed', 'Disapproved'].includes(updatedOrder.status)) {
           return prev.filter(o => o._id !== updatedOrder._id);
@@ -116,7 +122,6 @@ const navigate = useNavigate();
         return prev.map(o => (o._id === updatedOrder._id ? updatedOrder : o));
       });
 
-      // Clear checkout if order is cancelled or disapproved
       if (['Cancelled', 'Disapproved'].includes(updatedOrder.status)) {
         clearCheckout();
       }
@@ -137,55 +142,63 @@ const navigate = useNavigate();
   }, [userId, clearCheckout]);
 
   const cancelOrder = async (orderId) => {
+    console.log('Cancel button clicked for order:', orderId);
+    if (!orderId) {
+      console.error('Invalid orderId');
+      setError('Invalid order ID.');
+      return;
+    }
+
+    isCancellingRef.current = true;
     try {
-      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/orders/cancel/${orderId}`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const token = localStorage.getItem('token');
+      console.log('Cancel URL:', `${import.meta.env.VITE_BASE_URL}/api/orders/cancel/${orderId}`);
+      console.log('Token:', token);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/orders/cancel/${orderId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log('Cancel response:', response.data);
+      setOrders(prev => {
+        console.log('Orders before cancel:', prev);
+        const newOrders = prev.filter(o => o._id !== orderId);
+        console.log('Orders after cancel:', newOrders);
+        return newOrders;
       });
-      setOrders(prev => prev.filter(o => o._id !== orderId));
-      clearCheckout(); // Clear checkout when student cancels order
+      clearCheckout();
+      setError(null);
+      alert('Order canceled successfully!');
     } catch (err) {
-      console.error('Error canceling order:', err);
-      setError('Failed to cancel order. Please try again.');
+      console.error('Error canceling order:', err.response?.data || err.message);
+      setError(`Failed to cancel order: ${err.response?.data?.message || 'Please try again.'}`);
+    } finally {
+      isCancellingRef.current = false;
     }
   };
 
-  // Status badge color mapping
   const getStatusStyles = (status) => {
     switch(status) {
-      case 'Pending':
-        return 'bg-amber-50 text-amber-700 border border-amber-200';
-      case 'Processing':
-        return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-      case 'Ready':
-        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-      case 'Completed':
-        return 'bg-blue-50 text-blue-700 border border-blue-200';
-      case 'Cancelled':
-        return 'bg-red-50 text-red-700 border border-red-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border border-gray-200';
+      case 'Pending': return 'bg-amber-50 text-amber-700 border border-amber-200';
+      case 'Processing': return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+      case 'Ready': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'Completed': return 'bg-blue-50 text-blue-700 border border-blue-200';
+      case 'Cancelled': return 'bg-red-50 text-red-700 border border-red-200';
+      default: return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
-  // Status icon mapping
   const getStatusIcon = (status) => {
     switch(status) {
-      case 'Pending':
-        return <Clock className="w-4 h-4" />;
-      case 'Processing':
-        return <Clock className="w-4 h-4" />;
-      case 'Ready':
-        return <Check className="w-4 h-4" />;
-      case 'Completed':
-        return <Check className="w-4 h-4" />;
-      case 'Cancelled':
-        return <X className="w-4 h-4" />;
-      default:
-        return null;
+      case 'Pending': return <Clock className="w-4 h-4" />;
+      case 'Processing': return <Clock className="w-4 h-4" />;
+      case 'Ready': return <Check className="w-4 h-4" />;
+      case 'Completed': return <Check className="w-4 h-4" />;
+      case 'Cancelled': return <X className="w-4 h-4" />;
+      default: return null;
     }
   };
-  
-  // Theme colors based on time of day
+
   const getTimeTheme = () => {
     switch(activeTime) {
       case 'breakfast':
@@ -235,17 +248,14 @@ const navigate = useNavigate();
         };
     }
   };
-  
+
   const theme = getTimeTheme();
 
   const renderContent = () => {
     switch (content) {
-      case 'menu':
-        return <Menu managerId={managerId} />;
-      case 'profile':
-        return <Profile />;
-      case 'feedback':
-        return <Feedback />;
+      case 'menu': return <Menu managerId={managerId} />;
+      case 'profile': return <Profile />;
+      case 'feedback': return <Feedback />;
       default:
         return (
           <div>
@@ -335,6 +345,7 @@ const navigate = useNavigate();
             ) : (
               <AnimatePresence>
                 <div className="grid gap-6">
+<<<<<<< HEAD
                   {orders.map((order, index) => (
                     <motion.div 
                       key={order._id}
@@ -362,86 +373,122 @@ const navigate = useNavigate();
                               {getStatusIcon(order.status)}
                               <span>{order.status}</span>
                             </motion.span>
+=======
+                  {orders.filter(order => order.status.toLowerCase() !== 'cancelled').map((order, index) => {
+                    console.log(`Order ${order._id}: status=${order.status}, canCancel=${order.canCancel}`);
+                    return (
+                      <motion.div 
+                        key={order._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border border-gray-100 rounded-3xl bg-white hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        style={{
+                          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
+                          transform: 'translateZ(0)'
+                        }}
+                      >
+                        <div className="relative p-6">
+                          
+                          <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center space-x-4">
+                              <span className="font-bold text-2xl text-gray-900">#{order._id.slice(-6)}</span>
+                              <motion.span 
+                                variants={order.status === 'Ready' ? statusVariants.ready : (order.status === 'Pending' ? statusVariants.pending : {})}
+                                animate={order.status === 'Ready' ? "ready" : (order.status === 'Pending' ? "pending" : "initial")}
+                                className={`text-sm font-medium px-4 py-2 rounded-full flex items-center space-x-2 ${getStatusStyles(order.status)}`}
+                              >
+                                {getStatusIcon(order.status)}
+                                <span>{order.status}</span>
+                              </motion.span>
+                            </div>
+                            
+                            {order.status === 'Ready' && (
+                              <motion.div 
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 rounded-xl shadow-lg"
+                              >
+                                <motion.span 
+                                  animate={{ scale: [1, 1.1, 1] }}
+                                  transition={{ repeat: Infinity, duration: 2 }}
+                                  className="text-white font-bold tracking-wide text-lg"
+                                >
+                                  OTP: {order.otp || 'N/A'}
+                                </motion.span>
+                              </motion.div>
+                            )}
+>>>>>>> 38ecb02 (improved cancel function in student ,navigation link checkout)
                           </div>
                           
-                          {order.status === 'Ready' && (
-                            <motion.div 
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 rounded-xl shadow-lg"
+                          <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
+                            <div className="font-semibold text-gray-800 mb-3 text-lg">Your Order</div>
+                            <div className="grid gap-4">
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                  <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                      <span className="text-gray-500 font-bold">{item.quantity}</span>
+                                    </div>
+                                    <span className="text-gray-800 font-medium">
+                                      {item.menuItemId ? item.menuItemId.name : 'Item not found'}
+                                    </span>
+                                  </div>
+                                  <span className="text-gray-600">×{item.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-sm text-gray-500">Payment Status</span>
+                              <div className={`mt-1 ${order.paymentStatus === 'Paid' ? 'text-emerald-600' : 'text-amber-600'} font-bold text-lg`}>
+                                {order.paymentStatus}
+                              </div>
+                            </div>
+                            
+                          <div className="flex space-x-4">
+                          {order.canCancel && order.status === 'Pending' && (
+                            <motion.button 
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Cancel button clicked for order:', order._id);
+                                cancelOrder(order._id);
+                              }}
+                              className="px-5 py-3 border-2 border-red-500 text-red-500 rounded-full hover:bg-red-50 text-sm font-bold transition-colors"
                             >
-                              <motion.span 
-                                animate={{ scale: [1, 1.1, 1] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                                className="text-white font-bold tracking-wide text-lg"
-                              >
-                                OTP: {order.otp || 'N/A'}
-                              </motion.span>
+                              Cancel Order
+                            </motion.button>
+                          )}
+                        </div>
+
+                          </div>
+                          
+                          {order.status === 'Completed' && !order.feedback && (
+                            <motion.div 
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              className="mt-6 pt-6 border-t"
+                            >
+                              <div className="flex items-center mb-4">
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star key={star} className="w-6 h-6 text-amber-400 mr-1" fill="#FBBF24" />
+                                  ))}
+                                </div>
+                                <h4 className="font-semibold text-gray-800 ml-2">How was your meal?</h4>
+                              </div>
+                              <FeedbackForm orderId={order._id} />
                             </motion.div>
                           )}
                         </div>
-                        
-                        <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
-                          <div className="font-semibold text-gray-800 mb-3 text-lg">Your Order</div>
-                          <div className="grid gap-4">
-                          {order.items.map((item, idx) => (
-                              <div key={idx} className="flex justify-between items-center">
-                                <div className="flex items-center">
-                                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                    <span className="text-gray-500 font-bold">{item.quantity}</span>
-                                  </div>
-                                  <span className="text-gray-800 font-medium">
-                                    {item.menuItemId ? item.menuItemId.name : 'Item not found'}
-                                  </span>
-                                </div>
-                                <span className="text-gray-600">×{item.quantity}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-sm text-gray-500">Payment Status</span>
-                            <div className={`mt-1 ${order.paymentStatus === 'Paid' ? 'text-emerald-600' : 'text-amber-600'} font-bold text-lg`}>
-                              {order.paymentStatus}
-                            </div>
-                          </div>
-                          
-                          <div className="flex space-x-4">
-                            {order.canCancel && order.status === 'Pending' && (
-                              <motion.button 
-                                whileHover={{ scale: 1.03 }}
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => cancelOrder(order._id)} 
-                                className="px-5 py-3 border-2 border-red-500 text-red-500 rounded-full hover:bg-red-50 text-sm font-bold transition-colors"
-                              >
-                                Cancel Order
-                              </motion.button>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {order.status === 'Completed' && !order.feedback && (
-                          <motion.div 
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            className="mt-6 pt-6 border-t"
-                          >
-                            <div className="flex items-center mb-4">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="w-6 h-6 text-amber-400 mr-1" fill="#FBBF24" />
-                                ))}
-                              </div>
-                              <h4 className="font-semibold text-gray-800 ml-2">How was your meal?</h4>
-                            </div>
-                            <FeedbackForm orderId={order._id} />
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </AnimatePresence>
             )}

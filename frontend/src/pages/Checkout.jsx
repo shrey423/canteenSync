@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import socket from '../socket';
 import { jwtDecode } from 'jwt-decode';
@@ -20,11 +20,12 @@ function Checkout() {
   } = useCheckout();
   
   const navigate = useNavigate();
+  const location = useLocation();
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isValidSession, setIsValidSession] = useState(false);
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(location.state?.step || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Validate the checkout session
