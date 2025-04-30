@@ -2,6 +2,9 @@
 
 A modern, real-time canteen management system built with the MERN stack (MongoDB, Express.js, React.js, Node.js) that streamlines the food ordering process for students and canteen managers.
 
+#live link
+This project is live at:https://canteen-management-final.onrender.com
+
 ## ✨ Features
 
 ### For Students
@@ -48,8 +51,8 @@ A modern, real-time canteen management system built with the MERN stack (MongoDB
 
 1. Clone the repository
 ```bash
-git clone https://github.com/shrey423/canteen_management_final.git
-cd canteen_management_final
+git clone https://github.com/shrey423/canteenSync
+cd canteenSync
 ```
 
 2. Install dependencies for both frontend and backend
@@ -137,7 +140,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- Your Name - Initial work
+- Shrey Raj
 
 ## 🙏 Acknowledgments
 
@@ -145,9 +148,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Special thanks to the open-source community for their amazing tools and libraries
 
 ## 📞 Support
-
-For support, email your-email@example.com or create an issue in the repository.
+shreyraj12210@gmail.com or create an issue in the repository.
 
 ---
 
-Made with ❤️ by [Your Name] 
+Made with ❤️ by Shrey Raj
